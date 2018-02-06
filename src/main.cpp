@@ -1,22 +1,25 @@
 // #include <Arduino.h>
-#include "stm32f10x.h"
-#include "stm32f10x_conf.h"
-#include "stm32f10x_gpio.h"
-#include "stm32f10x_rcc.h"
+#include "stm32f1xx_hal.h"
 
-#define pin_cmd GPIO_Pin_1
-#define pin_clk GPIO_Pin_2
-#define pin_d1 GPIO_Pin_3
-#define pin_d2 GPIO_Pin_5
-#define pin_d3 GPIO_Pin_6
-#define pin_rst GPIO_Pin_4
+// #include "stm32f10x.h"
+// #include "stm32f10x_conf.h"
+// #include "stm32f10x_gpio.h"
+// #include "stm32f10x_rcc.h"
+
+#define pin_cmd GPIO_PIN_1
+#define pin_clk GPIO_PIN_2
+#define pin_d1 GPIO_PIN_3
+#define pin_d2 GPIO_PIN_5
+#define pin_d3 GPIO_PIN_6
+#define pin_rst GPIO_PIN_4
 
 void delay(unsigned long p)
 {
   volatile unsigned long i;
   for(i=0;i<p ;i++);
 }
-void SendData(uint32_t b1)
+
+void LcdSendData(uint32_t b1)
 {
   GPIOA->BSRR = pin_cmd;
   delay(10);
@@ -82,61 +85,83 @@ void LcdInit()
   SendCmd(0xc, 0x0, 0x0);
   SendCmd(0x8f, 0x0, 0x0);
   GPIOA->BSRR = pin_cmd;
-for (int i =0 ; i < 10000; ++i){
-  SendData(0);
-
-}
-  SendData(0);
-  SendData(0);
-  SendData(0);
-  SendData(0);
-  SendData(0);
-  SendData(0);
-  SendData(0);
-  SendData(0);
-  SendData(0);
-  SendData(0);
-  SendData(0);
-  SendData(0);
-  SendData(0);
-  SendData(0);
-  SendData(0);
-  SendData(0);
-  SendData(0);
-  SendData(0);
+  for (int i = 0; i < 10000; ++i){
+    LcdSendData(0);
+  }
 }
 
 
 int main() {
-  RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA, ENABLE);
-  RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOC, ENABLE);
+  HAL_Init();
+  __HAL_RCC_GPIOA_CLK_ENABLE();
+  __HAL_RCC_GPIOC_CLK_ENABLE();
+  // RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA, ENABLE);
+  // RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOC, ENABLE);
 
   GPIO_InitTypeDef GPIO_InitStructure;
-  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_13;
-  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
-  GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+  GPIO_InitStructure.Pin = GPIO_PIN_13;
+  GPIO_InitStructure.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStructure.Pull = GPIO_PULLDOWN;
+  GPIO_InitStructure.Speed = GPIO_SPEED_HIGH;
+  HAL_GPIO_Init( GPIOC , &GPIO_InitStructure);
 
-  GPIO_Init( GPIOC , &GPIO_InitStructure);
-  GPIO_InitStructure.GPIO_Pin = pin_cmd | pin_clk | pin_d1 | pin_rst | pin_d2 | pin_d3;
-  GPIO_Init( GPIOA , &GPIO_InitStructure);
+  GPIO_InitStructure.Pin = pin_cmd | pin_clk | pin_d1 | pin_rst | pin_d2 | pin_d3;
+  HAL_GPIO_Init( GPIOA , &GPIO_InitStructure);
 
-  GPIO_SetBits(GPIOC, GPIO_Pin_13);
+  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_SET);
 
   GPIOA->ODR = pin_rst;
   delay(1000);
   LcdInit();
 
-  GPIO_ResetBits(GPIOC, GPIO_Pin_13);
+  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_RESET);
 
   while(1)
   {
-    // GPIO_SetBits(GPIOC, GPIO_Pin_13);
-    // delay(100);
-    // GPIO_ResetBits(GPIOC, GPIO_Pin_13);
-    // delay(100);
+    HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_13);
+    HAL_Delay(1000);
   }
 }
 
-void loop()
+void SysTick_Handler(void)
+{
+  HAL_IncTick();
+}
+
+void NMI_Handler(void)
+{
+}
+
+void HardFault_Handler(void)
+{
+  while (1) {}
+}
+
+
+void MemManage_Handler(void)
+{
+  while (1) {}
+}
+
+void BusFault_Handler(void)
+{
+  while (1) {}
+}
+
+void UsageFault_Handler(void)
+{
+  while (1) {}
+}
+
+void SVC_Handler(void)
+{
+}
+
+
+void DebugMon_Handler(void)
+{
+}
+
+void PendSV_Handler(void)
 {
 }
